@@ -1,6 +1,5 @@
 // cmsis_armcc.hより先にこいつをインクルードすること.
 #include <CRSLib/cmsis_driver_include.h>
-#include <cmsis_armcc.h>
 
 #include <CRSLib/cmsis_for_cpp.h>
 
