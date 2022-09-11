@@ -49,6 +49,24 @@ namespace CRSLib::Can
 			return base_id;
 		}
 
+		template<OffsetIdsEnum auto offset_id>
+		void push(const DataField& data) noexcept
+		{
+			std::get<static_cast<std::underlying_type_t<OffsetIdsEnum>>(offset_id)>(offset_ids).queue.push(data);
+		}
+
+		template<OffsetIDsEnum auto offset_id>
+		std::optonal<DataField> pop() noexcept
+		{
+			return std::get<static_cast<std::underlying_type_t<OffsetIdsEnum>>(offset_id)>(offset_ids).queue.pop();
+		}
+
+		template<OffsetIdsEnum auto offset_id>
+		void clear() noexcept
+		{
+			std::get<static_cast<std::underlying_type_t<OffsetIdsEnum>>(offset_id)>(offset_ids).queue.clear();
+		}
+
 	private:
 		// id_num > 0
 		static constexpr u32 calc_id_align(const u32 id_num) noexcept

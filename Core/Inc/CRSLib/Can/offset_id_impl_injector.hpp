@@ -28,12 +28,12 @@ namespace CRSLib::Can
 		struct IsOffsetIdImplInjectorTraits<OffsetIdImplInjector<can_offset_id>> : std::true_type{};
 	}
 
-	using CanUnitCallback = void (const char (&)[can_mtu]) noexcept;
+	using RxUnitCallback = void (const DataField&) noexcept;
 
 	template<class T>
 	concept has_callback = requires
 	{
-		std::same_as<decltype(T::callback), CanUnitCallback>;
+		std::same_as<decltype(T::callback), RxUnitCallback>;
 	};
 
 	template<class T>

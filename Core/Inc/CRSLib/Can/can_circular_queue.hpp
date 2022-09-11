@@ -5,6 +5,7 @@
 
 #include <utility>
 #include <optional>
+#include <array>
 
 #include <CRSLib/cmsis_for_cpp.h>
 #include <CRSLib/std_int.hpp>
@@ -18,7 +19,7 @@ namespace CRSLib::Can
     class CanCircularQueue final
     {
         // バッファ.
-        char buffer[n][can_mtu]{};
+        DataField buffer[n]{};
         
         // 割り込み禁止が全然許容できそうなのでボツ. 割と面白いコードだったんだけどな...
         // 
@@ -34,7 +35,7 @@ namespace CRSLib::Can
         CanCircularQueue() = default;
 
         // 
-        void push(const char (&data)[can_mtu]) noexcept
+        void push(const DataField& data) noexcept
         {
             // // このイディオム、割り込みが起きても上手く動くのかな？なんで上手くいくのかよくわからない...
             // // 割り込みから復帰時にどっかからレジスタの中身もリロードしてて、そこにll/scに関連する状態が残っているからか？
@@ -68,7 +69,7 @@ namespace CRSLib::Can
 
             if(end == n) end = 0;
 
-            std::memcpy(buffer + end, data, can_mtu);
+            std::memcpy(buffer[end].data(), data, can_mtu);
             
             if(end == n - 1) end = 0;
             else ++end;
@@ -82,7 +83,7 @@ namespace CRSLib::Can
             stew_enable_irq();
         }
 
-        std::optional<T> pop() noexcept
+        std::optional<DataField> pop() noexcept
         {
             stew_disable_irq();
 
@@ -91,8 +92,8 @@ namespace CRSLib::Can
                 return std::nullopt;
             }
 
-            char ret[can_mtu];
-            std::memcpy(ret, buffer + begin, can_mtu);
+            DataField ret;
+            std::memcpy(ret, buffer[begin].data(), can_mtu);
 
             if(begin == n - 1) begin = buffer;
             else ++begin;
@@ -104,6 +105,7 @@ namespace CRSLib::Can
 
             stew_enable_irq();
 
+            
             return ret;
         }
 
