@@ -42,6 +42,9 @@ namespace CRSLib::Can
 		T::endian;
 		requires std::same_as<decltype(T::endian), std::endian>;
 
+		T::dlc;
+		requires std::same_as<decltype(T::dlc), u32>;
+
 		T::queue_size;
 		requires std::same_as<decltype(T::queue_size), size_t>;
 

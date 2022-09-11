@@ -14,7 +14,7 @@ namespace CRSLib::Can
 	{
 		public:
 		using Impl = OffsetIdImplInjectorAdaptor<offset_id>;
-		CanCircularQueue<Impl::queue_size> queue;
+		CanCircularQueue<Impl::queue_size> queue{};
 	};
 
 	namespace Implement::OffsetIdImp

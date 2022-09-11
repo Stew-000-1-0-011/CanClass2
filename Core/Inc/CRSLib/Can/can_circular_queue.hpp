@@ -3,11 +3,10 @@
 
 #pragma once
 
-#include <utility>
+#include <cstring>
 #include <optional>
-#include <array>
 
-#include <CRSLib/cmsis_for_cpp.h>
+#include <CRSLib/interrupt_lock.hpp>
 #include <CRSLib/std_int.hpp>
 
 #include "utility.hpp"
@@ -15,105 +14,71 @@
 
 namespace CRSLib::Can
 {
-    template<size_t n>
-    class CanCircularQueue final
-    {
-        // バッファ.
-        DataField buffer[n]{};
-        
-        // 割り込み禁止が全然許容できそうなのでボツ. 割と面白いコードだったんだけどな...
-        // 
-        // // 二つの変数を関係性を崩さずに扱いたい... -> 難しい...
-        // // --> せや！一つにしたろ！！(脳筋)
-        // // 上位16bitがbegin, 下位16bitがend
-        // volatile u32 range{0 << 8_u32 + n};
+	template<size_t n>
+	class CanCircularQueue final
+	{
+		// バッファ.
+		DataField buffer[n]{};
 
-        size_t begin{0};
-        size_t end{n};
+		size_t begin{0};
+		size_t end{n};
 
-    public:
-        CanCircularQueue() = default;
+	public:
+		// 割り込み禁止が全然許容できそうなのでボツ. 割と面白いコードだったんだけどな...
+		// 
+		// // 二つの変数を関係性を崩さずに扱いたい... -> 難しい...
+		// // --> せや！一つにしたろ！！(脳筋)
+		// // 上位16bitがbegin, 下位16bitがend
+		// volatile u32 range{0 << 8_u32 + n};
 
-        // 
-        void push(const DataField& data) noexcept
-        {
-            // // このイディオム、割り込みが起きても上手く動くのかな？なんで上手くいくのかよくわからない...
-            // // 割り込みから復帰時にどっかからレジスタの中身もリロードしてて、そこにll/scに関連する状態が残っているからか？
-            // // ...
-            // // ......そもそも割り込み禁止を許容したのにこんなことする必要あるか...？
-            // // -> 書いてて楽しいからいいんだよ！！
-            // // --> でも割り込み禁止を使うほうがなんか早そう(未計測)なのでやめた...
-            // 
-            // u16 push_index;
-            // u32 current_range;
-            // do
-            // {
-            //     current_range = stew_load_link_32(&range);
+		// 割り込み安全にデータをプッシュする.
+		void push(const DataField& data) noexcept
+		{
+			InterruptLock lock{};
 
-            //     u16 current_begin = current_range & 0xFF'FF'00'00_u32;
-            //     u16 current_end = push_index = current_range >> 8_u32;
+			if(end == n) end = 0;
 
-            //     if(current_end >= n - 1) current_end -= n - 1;
-            //     else ++current_end;
+			std::memcpy(buffer[end].data(), data.data(), can_mtu);
+			
+			if(end == n - 1) end = 0;
+			else ++end;
 
-            //     if(current_end == current_begin)
-            //     {
-            //         if(current_begin == n - 1) current_begin = 0;
-            //         else ++current_begin;
-            //     }
+			if(begin == end)
+			{
+				if(begin == n - 1) begin = 0;
+				else ++begin;
+			}
+		}
 
-            //     current_range = current_begin << 8_u32 | current_end;
-            // }while(stew_store_conditional_32(&range, current_range));
+		// 割り込み安全にpopする.
+		std::optional<DataField> pop() noexcept
+		{
+			InterruptLock lock{};
 
-            stew_disable_irq();
+			if(end == n)
+			{
+				return std::nullopt;
+			}
 
-            if(end == n) end = 0;
+			DataField ret;
+			std::memcpy(ret.data(), buffer[begin].data(), can_mtu);
 
-            std::memcpy(buffer[end].data(), data, can_mtu);
-            
-            if(end == n - 1) end = 0;
-            else ++end;
+			if(begin == n - 1) begin = 0;
+			else ++begin;
 
-            if(begin == end)
-            {
-                if(begin == n - 1) begin = 0;
-                else ++begin;
-            }
+			if(begin == end)
+			{
+				end = n;
+			}
 
-            stew_enable_irq();
-        }
+			return ret;
+		}
 
-        std::optional<DataField> pop() noexcept
-        {
-            stew_disable_irq();
-
-            if(end == n)
-            {
-                return std::nullopt;
-            }
-
-            DataField ret;
-            std::memcpy(ret, buffer[begin].data(), can_mtu);
-
-            if(begin == n - 1) begin = buffer;
-            else ++begin;
-
-            if(begin == end)
-            {
-                end = n;
-            }
-
-            stew_enable_irq();
-
-            
-            return ret;
-        }
-
-        void clear() noexcept
-        {
-            stew_disable_irq();
-            end = begin;
-            stew_enable_irq();
-        }
-    };
+		// 割り込み安全にキューを空にする.
+		void clear() noexcept
+		{
+			InterruptLock lock{};
+			end = begin;
+		}
+	};
 }
