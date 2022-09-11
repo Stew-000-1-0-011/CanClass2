@@ -17,7 +17,7 @@ namespace CRSLib::Can
     concept BeAbleToPack = sizeof(T) <= can_mtu && std::is_trivially_copyable_v<T>;
 
     template<BeAbleToPack T, std::endian endian>
-    inline void pack(char (&buffer)[can_mtu], const T& value) noexcept
+    inline void pack(DataField& buffer, const T& value) noexcept
     {
         std::memcpy(buffer, &value, sizeof(T));
 
@@ -31,7 +31,7 @@ namespace CRSLib::Can
     }
 
     template<BeAbleToPack T, std::endian endian>
-    inline T unpack(const char (&buffer)[can_mtu]) noexcept
+    inline T unpack(const DataField& buffer) noexcept
     {
         if constexpr(std::endian::native != endian)
         {

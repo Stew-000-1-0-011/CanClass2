@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <array>
+
 #include <CRSLib/std_int.hpp>
 #include <main.h>
 
@@ -19,6 +21,8 @@ namespace CRSLib::Can
 	inline constexpr u32 max_std_id = 0x07'FF;
 	inline constexpr u32 max_ext_id = 0x03'FF'FF;
 	inline constexpr u32 null_id = max_ext_id;
+
+	using DataField = std::array<char, can_mtu>;
 
 	enum class FifoIndex : u32
 	{
