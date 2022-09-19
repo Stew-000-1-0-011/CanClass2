@@ -29,13 +29,13 @@
 //	{
 //	}
 //
-//	void f(CAN_HandleTypeDef *const hcan)
+//	void f(CAN_HandleTypeDef *const &hcan)
 //	{
 //		using namespace CRSLib::IntegerLiterals;
 //
 //
 //
-//		  [[maybe_unused]] auto can_manager = make_can_manager<CanX::can1, 14_u32>(hcan, std::tuple{CRSLib::ToValue<CanCommonCommands>(), 0_u32, FifoIndex::fifo0}, std::tuple{CRSLib::ToValue<HogeCommands>(), 4_u32, FifoIndex::fifo1}, std::tuple{CRSLib::ToValue<Hoge2Commands>(), 4_u32, FifoIndex::fifo1});
+//		  [[maybe_unused]] auto can_manager = make_can_manager<CanX::can1, 14_u32>(&hcan, std::tuple{CRSLib::ToValue<CanCommonCommands>(), 0_u32, FifoIndex::fifo0}, std::tuple{CRSLib::ToValue<HogeCommands>(), 4_u32, FifoIndex::fifo1}, std::tuple{CRSLib::ToValue<Hoge2Commands>(), 4_u32, FifoIndex::fifo1});
 ////		std::tuple<CanUnit<OffsetIdsEnums, int> ...> hoge{std::tuple{make_can_unit<OffsetIdsEnums>(std::get<1>(args), (int *)nullptr) ...}};
 //	}
 //}
@@ -57,3 +57,10 @@
 //	uint32_t a;
 //	auto x = __LDREXW(&a);
 //}
+
+#include <functional>
+
+int main()
+{
+	std::function<int()>::result_type a;
+}

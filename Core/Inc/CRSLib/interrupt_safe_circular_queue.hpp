@@ -1,24 +1,22 @@
 // CMSISを使っている.
-// C++標準では保証しきれないコードであるので、不用意に使いまわさないこと(stm32f1系なら多分動くんじゃないかな...)
+// C++標準では保証しきれないコードであるので, 不用意に使いまわさないこと(stm32f1系なら多分動くんじゃないかな...)
 
 #pragma once
 
 #include <cstring>
 #include <optional>
 
-#include <CRSLib/interrupt_lock.hpp>
-#include <CRSLib/std_int.hpp>
-
-#include "utility.hpp"
+#include "interrupt_disabler.hpp"
+#include "std_int.hpp"
 
 
-namespace CRSLib::Can
+namespace CRSLib
 {
-	template<size_t n>
-	class CanCircularQueue final
+	template<class Elem, size_t n>
+	class InterruptSafeCircularQueue final
 	{
 		// バッファ.
-		DataField buffer[n]{};
+		Elem buffer[n]{};
 
 		size_t begin{0};
 		size_t end{n};
@@ -32,13 +30,13 @@ namespace CRSLib::Can
 		// volatile u32 range{0 << 8_u32 + n};
 
 		// 割り込み安全にデータをプッシュする.
-		void push(const DataField& data) noexcept
+		void push(const Elem& x) noexcept
 		{
-			InterruptLock lock{};
+			InterruptDisabler disabler{};
 
 			if(end == n) end = 0;
 
-			std::memcpy(buffer[end].data(), data.data(), can_mtu);
+			buffer[end] = x;
 			
 			if(end == n - 1) end = 0;
 			else ++end;
@@ -51,17 +49,16 @@ namespace CRSLib::Can
 		}
 
 		// 割り込み安全にpopする.
-		std::optional<DataField> pop() noexcept
+		std::optional<Elem> pop() noexcept
 		{
-			InterruptLock lock{};
+			InterruptDisabler disabler{};
 
 			if(end == n)
 			{
 				return std::nullopt;
 			}
 
-			DataField ret;
-			std::memcpy(ret.data(), buffer[begin].data(), can_mtu);
+			Elem ret = buffer[begin];
 
 			if(begin == n - 1) begin = 0;
 			else ++begin;
@@ -77,7 +74,7 @@ namespace CRSLib::Can
 		// 割り込み安全にキューを空にする.
 		void clear() noexcept
 		{
-			InterruptLock lock{};
+			InterruptDisabler disabler{};
 			end = begin;
 		}
 	};

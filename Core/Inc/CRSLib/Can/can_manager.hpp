@@ -11,6 +11,7 @@
 #include "pack.hpp"
 #include "config.hpp"
 #include "utility.hpp"
+#include "handle.hpp"
 #include "rx_unit.hpp"
 #include "filter_manager.hpp"
 
@@ -22,10 +23,10 @@ namespace CRSLib::Can
 	public:
 		static void initialize(const u32 ... can_iterrupts) noexcept
 		{
-			// 既にCubeMXで初期化されている場合、再初期化
+			// 既にCubeMXで初期化されている場合, 再初期化
 			if constexpr(Config::use_cube_mx_can_init)
 			{
-				if(HAL_CAN_DeInit(Config::can_instance<can_x>) != HAL_OK)
+				if(HAL_CAN_DeInit(&hcan<can_x>) != HAL_OK)
 				{
 					Debug::set_error("Fil to deinitialize bxCAN.");
 					Error_Handler();
@@ -33,8 +34,8 @@ namespace CRSLib::Can
 				}
 			}
 
-			// bxCANを初期化モードに変更し、初期化
-			if(HAL_CAN_Init(Config::can_instance<can_x>) != HAL_OK)
+			// bxCANを初期化モードに変更し, 初期化
+			if(HAL_CAN_Init(&hcan<can_x>) != HAL_OK)
 			{
 				Debug::set_error("Fail to initialize bxCAN.");
 				Error_Handler();
@@ -53,7 +54,7 @@ namespace CRSLib::Can
 			}
 
 			// 動作モードに変更
-			if(HAL_CAN_Start(Config::can_instance<can_x>) != HAL_OK)
+			if(HAL_CAN_Start(&hcan<can_x>) != HAL_OK)
 			{
 				Debug::set_error("Fail to start bxCAN.");
 				Error_Handler();
@@ -66,5 +67,7 @@ namespace CRSLib::Can
 
 		[[deprecated("unimplemented.")]] static void make_normal() noexcept
 		{}
+
+		// 他にも, CanXの列挙子に紐づく機能全体に影響する関数を書きたいなら, ここの静的メンバ関数に加えてほしい.
 	};
 }

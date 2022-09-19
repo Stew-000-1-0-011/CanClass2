@@ -5,7 +5,7 @@
 #include "config.hpp"
 #include "utility.hpp"
 
-namespace CRSLib::Can
+namespace CRSLib::Can::Implment
 {
     template<CanX can_x>
     CAN_HandleTypeDef hcan

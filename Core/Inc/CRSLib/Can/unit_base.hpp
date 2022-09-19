@@ -1,11 +1,11 @@
 #pragma once
 
 #include <utility>
+#include <tuple>
 
 #include <CRSLib/std_int.hpp>
+#include <CRSLib/utility.hpp>
 #include <CRSLib/debug.hpp>
-
-#include "offset_id_impl_injector.hpp"
 
 namespace CRSLib::Can
 {
@@ -14,11 +14,10 @@ namespace CRSLib::Can
     {
     public:
 		using OffsetIdsEnum = OffsetIdsEnum_;
-		static constexpr auto id_num = static_cast<std::underlying_type_t<OffsetIdsEnum>>(OffsetIdsEnum::n);
+		static constexpr auto id_num = to_underlying(OffsetIdsEnum::n);
 		static constexpr auto align = UnitBase<OffsetIdsEnum>::calc_id_align(id_num);
 	
 	protected:
-		OffsetIdTuple<OffsetIdsEnum::n> offset_ids{};
 		u32 base_id;
 
 	public:
@@ -38,33 +37,15 @@ namespace CRSLib::Can
 			return base_id < id && id < base_id + id_num;
 		}
 
-		template<IsOffsetIdsEnum OffsetIdsEnum2>
-		bool is_duplicate(const UnitBase<OffsetIdsEnum2>& obj) noexcept
-		{
-			return obj.base_id < base_id + id_num && base_id < obj.base_id + obj.id_num;
-		}
-
 		u32 get_base_id() const noexcept
 		{
 			return base_id;
 		}
 
-		template<OffsetIdsEnum auto offset_id>
-		void push(const DataField& data) noexcept
+		template<IsOffsetIdsEnum OffsetIdsEnum2>
+		friend constexpr bool is_overlap(const UnitBase& l, const UnitBase<OffsetIdsEnum2>& r) noexcept
 		{
-			std::get<static_cast<std::underlying_type_t<OffsetIdsEnum>>(offset_id)>(offset_ids).queue.push(data);
-		}
-
-		template<OffsetIDsEnum auto offset_id>
-		std::optonal<DataField> pop() noexcept
-		{
-			return std::get<static_cast<std::underlying_type_t<OffsetIdsEnum>>(offset_id)>(offset_ids).queue.pop();
-		}
-
-		template<OffsetIdsEnum auto offset_id>
-		void clear() noexcept
-		{
-			std::get<static_cast<std::underlying_type_t<OffsetIdsEnum>>(offset_id)>(offset_ids).queue.clear();
+			return l.base_id < r.base_id + r.id_num && r.base_id < l.base_id + l.id_num;
 		}
 
 	private:
@@ -81,4 +62,18 @@ namespace CRSLib::Can
 			return ret;
 		}
     };
+
+	template<IsOffsetIdsEnum ... OffsetIdsEnum>
+	inline constexpr bool are_correctly_lined_up(const UnitBase<OffsetIdsEnum>& ... units) noexcept
+	{
+		const auto units_former = std::make_tuple(&units ..., nullptr);
+		const auto units_latter = std::make_tuple(nullptr, &units ...);
+
+		return [&units_former, &units_latter]<size_t ... indices>(std::index_sequence<indices ...>)
+		{
+			return (std::get<indices + 1>(units_former) < std::get<indices + 1>(units_latter) &&
+				is_overlap(std::get<indices + 1>(units_former), std::get<indices + 1>(units_latter)) && ...);
+		}
+		(std::make_index_sequence<sizeof...(OffsetIdsEnum)>);
+	}
 }

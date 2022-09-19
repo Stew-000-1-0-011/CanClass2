@@ -9,7 +9,7 @@ namespace CRSLib::Can::Config
 {
     // フィルタバンクの個数
     inline constexpr u32 filter_bank_total_size = 14;
-    // DualCANを使う場合の、スレーブの使うフィルタバンクの先頭のインデックス
+    // DualCANを使う場合の, スレーブの使うフィルタバンクの先頭のインデックス
     inline constexpr u32 slave_start_filter_bank = 15;
 
     // DualCANを使うかどうか

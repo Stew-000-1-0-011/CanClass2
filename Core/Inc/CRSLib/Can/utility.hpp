@@ -1,5 +1,5 @@
 // どのヘッダでも使うような機能はここに。
-// 依存性が複雑になるので、なるべく追加しないこと。
+// 依存性が複雑になるので, なるべく追加しないこと。
 
 #pragma once
 
@@ -24,23 +24,25 @@ namespace CRSLib::Can
 
 	using DataField = std::array<char, can_mtu>;
 
-	enum class FifoIndex : u32
+	struct RxHeader final
 	{
-		fifo0,
-		fifo1
+		u32 id{null_id};
+		u32 time_stamp{-1};
+		bool is_remote{false};
+		u8 dlc{0};
 	};
 
-	template<FifoIndex fifo_index>
-	inline constexpr auto convert_fifo_index_to_hal_can_filter_fifo() noexcept
+	struct RxFrame final
 	{
-		switch(fifo_index)
-		{
-		case FifoIndex::fifo0:
-			return CAN_FilterFIFO0;
-		case FifoIndex::fifo1:
-			return CAN_FilterFIFO1;
-		}
-	}
+		RxHeader header{};
+		DataField data{};
+	};
+
+	enum class FifoIndex : u32
+	{
+		fifo0 = 0,
+		fifo1 = 1
+	};
 
 	inline constexpr bool is_in_std_id_range(const u32 id) noexcept
 	{
