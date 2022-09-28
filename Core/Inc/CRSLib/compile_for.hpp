@@ -4,7 +4,7 @@
 
 namespace CRSLib
 {
-    namespace Implement::CompileFor
+    namespace Implement::CompileForImp
     {
         template<class T>
         concept IsForIter = requires(T iter)
@@ -13,7 +13,7 @@ namespace CRSLib
         };
     }
 
-    template<class BodyFunc, Implement::CompileFor::IsForIter ForIter>
+    template<class BodyFunc, Implement::CompileForImp::IsForIter ForIter>
     constexpr auto&& compile_for(BodyFunc&& body_func, ForIter&& for_iter) noexcept
     {
         auto&& next_iter = body_func(for_iter);

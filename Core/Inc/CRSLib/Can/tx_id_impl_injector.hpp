@@ -5,7 +5,7 @@
 #include "offset_id.hpp"
 #include "id_impl_injector_base.hpp"
 
-namespace CRSLib::Can::Implement
+namespace CRSLib::Can
 {
 	template<IsOffsetIdsEnum auto offset_id>
 	struct TxIdImplInjector;
@@ -20,7 +20,7 @@ namespace CRSLib::Can::Implement
 	}
 
 	template<class T>
-	concept IsTxIdImplInjector = Implement::TxIdImplInjectorImp::is_tx_id_impl_injector<T> && IdImplInjectorBase<T>;
+	concept IsTxIdImplInjector = Implement::TxIdImplInjectorImp::is_tx_id_impl_injector<T> && Implement::IdImplInjectorBase<T>;
 
 	template<IsOffsetIdsEnum auto offset_id>
 	requires IsTxIdImplInjector<TxIdImplInjector<offset_id>>

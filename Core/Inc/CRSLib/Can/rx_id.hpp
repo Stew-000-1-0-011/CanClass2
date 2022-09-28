@@ -4,6 +4,7 @@
 #include <tuple>
 
 #include <CRSLib/interrupt_safe_circular_queue.hpp>
+#include <CRSLib/executor.hpp>
 
 #include "utility.hpp"
 #include "rx_id_impl_injector.hpp"
@@ -12,7 +13,7 @@ namespace CRSLib::Can::Implement
 {
 	template<IsOffsetIdsEnum auto offset_id>
 	requires IsRxIdImplInjector<RxIdImplInjector<offset_id>>
-	struct RxId final : RxIdBase
+	struct RxId final
 	{
 		using Impl = RxIdImplAdaptor<offset_id>;
 		InterruptSafeCircularQueue<RxFrame, Impl::queue_size> queue{};
@@ -22,7 +23,7 @@ namespace CRSLib::Can::Implement
 
 	template<IsOffsetIdsEnum auto offset_id>
 	requires IsRxIdImplInjector<RxIdImplInjector<offset_id>> && HasMemberCallback<RxIdImplInjector<offset_id>>
-	struct RxId final : RxIdBase
+	struct RxId final : Executable<void () noexcept>
 	{
 		using Impl = RxIdImplAdaptor<offset_id>;
 		InterruptSafeCircularQueue<RxFrame, Impl::queue_size> queue{};
@@ -41,11 +42,16 @@ namespace CRSLib::Can::Implement
 			}
 			else return false;
 		}
+
+		void execute() noexcept override
+		{
+			call_once();
+		}
 	};
 
 	template<IsOffsetIdsEnum auto offset_id>
 	requires IsRxIdImplInjector<RxIdImplInjector<offset_id>> && HasNonMemberCallback<RxIdImplInjector<offset_id>>
-	struct RxId final : RxIdBase
+	struct RxId final : Executable<void () noexcept>
 	{
 		using Impl = RxIdImplAdaptor<offset_id>;
 		InterruptSafeCircularQueue<RxFrame, Impl::queue_size> queue{};
@@ -62,6 +68,11 @@ namespace CRSLib::Can::Implement
 				return true;
 			}
 			else return false;
+		}
+
+		void execute() noexcept override
+		{
+			call_once();
 		}
 	};
 

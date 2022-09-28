@@ -9,13 +9,13 @@
 
 namespace CRSLib::Can
 {
-    template<IsOffsetIdsEnum IsOffsetIdsEnum_>
-    class UnitBase
-    {
-    public:
+	template<IsOffsetIdsEnum IsOffsetIdsEnum_>
+	class UnitBase
+	{
+	public:
 		using OffsetIdsEnum = OffsetIdsEnum_;
 		static constexpr auto id_num = to_underlying(OffsetIdsEnum::n);
-		static constexpr auto align = UnitBase<OffsetIdsEnum>::calc_id_align(id_num);
+		// static constexpr auto align = UnitBase<OffsetIdsEnum>::calc_id_align(id_num);
 	
 	protected:
 		u32 base_id;
@@ -24,11 +24,11 @@ namespace CRSLib::Can
 		UnitBase(const u32 base_id) noexcept:
 			base_id{base_id}
 		{
-			if(!(base_id % align))
-			{
-				Debug::set_error("base_id does not meet the required alignment.");
-				Error_Handler();
-			}
+			// if(!(base_id % align))
+			// {
+			// 	Debug::set_error("base_id does not meet the required alignment.");
+			// 	Error_Handler();
+			// }
 		}
 
 	public:
@@ -61,19 +61,5 @@ namespace CRSLib::Can
 			}
 			return ret;
 		}
-    };
-
-	template<IsOffsetIdsEnum ... OffsetIdsEnum>
-	inline constexpr bool are_correctly_lined_up(const UnitBase<OffsetIdsEnum>& ... units) noexcept
-	{
-		const auto units_former = std::make_tuple(&units ..., nullptr);
-		const auto units_latter = std::make_tuple(nullptr, &units ...);
-
-		return [&units_former, &units_latter]<size_t ... indices>(std::index_sequence<indices ...>)
-		{
-			return (std::get<indices + 1>(units_former) < std::get<indices + 1>(units_latter) &&
-				is_overlap(std::get<indices + 1>(units_former), std::get<indices + 1>(units_latter)) && ...);
-		}
-		(std::make_index_sequence<sizeof...(OffsetIdsEnum)>);
-	}
+	};
 }

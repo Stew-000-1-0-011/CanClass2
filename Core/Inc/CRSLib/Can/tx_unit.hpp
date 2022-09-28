@@ -42,23 +42,20 @@ namespace CRSLib::Can
 		{
 			InterruptDisabler disabler{};
 
-			while(true)
+			auto for_body_par_id = [this]<std::underlying_type_t<OffsetIdsEnum> offset_id>(CompileForIndex<offset_id>) noexcept
 			{
-				if(HAL_CAN_GetTxMailboxesFreeLevel(&hcan<can_x>) == 0) break;
-				if(const auto opt_data_field = tx_unit_p.pop<offset_id>(); !opt_data_field) break;
-				else
+				CompileForIndex<offset_id + 1> ret{};
+				if constexpr(offset_id == to_underlying(OffsetIdsEnum::n))
 				{
-					auto tx_header = make_default_tx_header<can_x, offset_id>();
-					u32 mail_box{};
-					if(HAL_CAN_AddTxMessage(&hcan<can_x>, &tx_header, opt_data_field->data(), &mail_box) != HAL_OK)
-					{
-						Debug::set_error("Fail to call HAL_CAN_AddTxMessage.");
-						Error_Handler();
-						ret.is_breaked = true;
-						return ret;
-					}
+					ret.is_breaked = true;
+					return ret;
 				}
-			}
+
+				ret.is_breaked = std::get<offset_id>(tx_ids).transmit(make_default_tx_header<can_x, static_cast<OffsetIdsEnum>(offset_id)>());
+				return ret;
+			};
+
+			compile_for(for_body_par_id, CompileForIndex<to_underlying<OffsetIdsEnum>(0)>{});
 		}
 
 		template<OffsetIdsEnum auto offset_id>
@@ -73,16 +70,4 @@ namespace CRSLib::Can
 			std::get<to_underlying(offset_id)>(offset_ids).queue.clear();
 		}
 	};
-
-	namespace Implement::TxUnitImp
-	{
-		template<class T>
-		inline constexpr bool is_tx_unit = false;
-
-		template<IsOffsetIdsEnum OffsetIdsEnum>
-		inline constexpr bool is_tx_unit<TxUnit<OffsetIdsEnum>> = true;
-	}
-
-	template<class T>
-	concept IsTxUnit = Implement::TxUnitImp::is_tx_unit<T>;
 }

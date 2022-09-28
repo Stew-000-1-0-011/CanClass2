@@ -17,10 +17,8 @@ namespace CRSLib::Can
 	// なんでDualCANはFilterBankを共有してんだ！？
 	namespace FilterManager
 	{
-		namespace Private
+		namespace Implement
 		{
-			using namespace IntegerLiterals;
-
 			template<CanX can_x>
 			inline constexpr u32 max_filter_bank_index = (can_x == CanX::can1)?
 				Config::slave_start_filter_bank - 1 :
@@ -46,7 +44,7 @@ namespace CRSLib::Can
 			}
 		};
 
-		namespace Private
+		namespace Implement
 		{
 			inline constexpr u32 lshift_to_high_std_id = 5;
 			inline constexpr u32 rshift_to_high_ext_id = 13;
@@ -135,7 +133,7 @@ namespace CRSLib::Can
 		template<CanX can_x>
 		void register_filter(const FilterId& filter_id, bool activated) noexcept
 		{
-			using namespace Private;
+			using namespace Implement;
 			using std::ranges;
 
 			if(is_overlap(filter_id, FilterId{}))
@@ -181,7 +179,7 @@ namespace CRSLib::Can
 		template<CanX can_x>
 		void unregister_filter(const FilterId& filter_id) noexcept
 		{
-			using namespace Private;
+			using namespace Implement;
 
 			if(const auto unregistered_iter = FilterBank::find_if<can_x>(filter_id); is_end(unregistered_iter))
 			{
@@ -206,7 +204,8 @@ namespace CRSLib::Can
 
 		void dynamic_initialize() noexcept
 		{
-			using namespace Private;
+			using namespace Implement;
+			using namespace IntegerLiterals;
 
 			auto null_filter = make_can_filter(FilterId{}, /*undefined*/0_u32, false);
 
@@ -216,7 +215,7 @@ namespace CRSLib::Can
 				{
 					null_filter.FilterBank = i;
 
-					if(HAL_CAN_ConfigFilter(&hcan<CanX::can1>, &null_filter) != HAL_OK)
+					if(HAL_CAN_ConfigFilter(&Can::Implement::hcan<CanX::can1>, &null_filter) != HAL_OK)
 					{
 						Debug::set_error("Fail to call HAL_CAN_ConfigFilter.");
 						Error_Handler();
@@ -229,7 +228,7 @@ namespace CRSLib::Can
 				{
 					null_filter.FilterBank = i;
 
-					if(HAL_CAN_ConfigFilter(&hcan<CanX::can2>, &null_filter) != HAL_OK)
+					if(HAL_CAN_ConfigFilter(&Can::Implement::hcan<CanX::can2>, &null_filter) != HAL_OK)
 					{
 						Debug::set_error("Fail to call HAL_CAN_ConfigFilter.");
 						Error_Handler();
@@ -245,7 +244,7 @@ namespace CRSLib::Can
 				{
 					null_filter.FilterBank = i;
 
-					if(HAL_CAN_ConfigFilter(&hcan<CanX::single_can>, &null_filter) != HAL_OK)
+					if(HAL_CAN_ConfigFilter(&Can::Implement::hcan<CanX::single_can>, &null_filter) != HAL_OK)
 					{
 						Debug::set_error("Fail to call HAL_CAN_ConfigFilter.");
 						Error_Handler();
@@ -260,7 +259,7 @@ namespace CRSLib::Can
 		template<CanX can_x>
 		inline void plug_ears(const FilterId& filter_id) noexcept
 		{
-			using namespace Private;
+			using namespace Implement;
 
 			const auto disabled_iter = FilterBank::find_if<can_x>(filter_id);
 			if(FilterBank::is_end(disabled_iter))
@@ -284,7 +283,7 @@ namespace CRSLib::Can
 		template<CanX can_x>
 		inline void listen_to(const FilterId& filter_id) noexcept
 		{
-			using namespace Private;
+			using namespace Implement;
 
 			const auto enablec_iter = find_if<can_x>(filter_id);
 			if(FilterBank<can_x>::is_end(enabled_iter))

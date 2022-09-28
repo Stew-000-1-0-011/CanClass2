@@ -9,7 +9,7 @@
 
 namespace CRSLib::Can
 {
-	template<Implement::IsOffsetIdsEnum auto offset_id>
+	template<IsOffsetIdsEnum auto offset_id>
 	class RxIdImplInjector;
 
 	namespace Implement

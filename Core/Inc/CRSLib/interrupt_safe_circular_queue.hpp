@@ -12,8 +12,16 @@
 
 namespace CRSLib
 {
+	template<class Elem>
+	struct InterruptSafeCircularQueueEraseN
+	{
+		virtual void push(const Elem& x) noexcept = 0;
+		virtual std::optional<Elem> pop() noexcept = 0;
+		virtual void clear() noexcept = 0;
+	};
+
 	template<class Elem, size_t n>
-	class InterruptSafeCircularQueue final
+	class InterruptSafeCircularQueue final : InterruptSafeCircularQueueEraseN<Elem>
 	{
 		// バッファ.
 		Elem buffer[n]{};
@@ -30,7 +38,7 @@ namespace CRSLib
 		// volatile u32 range{0 << 8_u32 + n};
 
 		// 割り込み安全にデータをプッシュする.
-		void push(const Elem& x) noexcept
+		void push(const Elem& x) noexcept override
 		{
 			InterruptDisabler disabler{};
 

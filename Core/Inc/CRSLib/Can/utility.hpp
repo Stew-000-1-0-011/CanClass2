@@ -32,6 +32,17 @@ namespace CRSLib::Can
 		u8 dlc{0};
 	};
 
+	RxHeader make_rx_header(const CAN_RxHeaderTypeDef& rx_header) noexcept
+	{
+		return
+			{
+				rx_header.IDE == CAN_ID_STD ? rx_header.StdId : rx_header.ExtId,
+				rx_header.Timestamp,
+				rx_header.RTR == CAN_RTR_REMOTE,
+				static_cast<u8>(rx_header.DLC)
+			};
+	}
+
 	struct RxFrame final
 	{
 		RxHeader header{};

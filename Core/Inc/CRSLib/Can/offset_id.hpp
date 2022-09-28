@@ -7,7 +7,7 @@
 #include <CRSLib/std_int.hpp>
 #include <CRSLib/utility.hpp>
 
-namespace CRSLib::Can::Implement
+namespace CRSLib::Can
 {
 	// 制約に落とし込められてないが, nが最大である必要がある。
 	// また, 連番である必要がある。

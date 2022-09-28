@@ -15,6 +15,26 @@ namespace CRSLib::Can
 	{
 		using Impl = TxIdImplInjectorAdaptor<offset_id>;
 		InterruptSafeCircularQueue<DataField, Impl::queue_size> queue{};
+
+		// Mailboxが満杯になった(あるいはエラーが発生した)らfalse, そうでなければtrueを返す.
+		bool transmit(const CAN_TxHeaderTypeDef& tx_header) noexcept
+		{
+			while(true)
+			{
+				if(HAL_CAN_GetTxMailboxesFreeLevel(&hcan<can_x>) == 0) return false;
+				if(const auto opt_data_field = tx_unit_p.pop<offset_id>(); !opt_data_field) return true;
+				else
+				{
+					u32 mail_box{};
+					if(HAL_CAN_AddTxMessage(&hcan<can_x>, &tx_header, opt_data_field->data(), &mail_box) != HAL_OK)
+					{
+						Debug::set_error("Fail to call HAL_CAN_AddTxMessage.");
+						Error_Handler();
+						return false;
+					}
+				}
+			}
+		}
 	};
 
 	namespace Implement::TxIdImp

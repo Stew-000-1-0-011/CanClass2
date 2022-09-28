@@ -12,7 +12,6 @@
 
 #include "config.hpp"
 #include <CRSLib/interrupt_safe_circular_queue.hpp>
-#include "offset_id_impl_injector.hpp"
 #include "offset_id.hpp"
 #include "tx_unit.hpp"
 
@@ -21,57 +20,94 @@ namespace CRSLib::Can
 	template<CanX can_x, IsOffsetIdsEnum ... OffsetIdsEnums>
 	class Transmitter final
 	{
-		std::tuple<TxUnit<OffsetIdsEnums> * ...> tx_units{};
+		std::tuple<TxUnit<OffsetIdsEnums> ...> tx_units{};
 
-		template<CanX can_x, IsOffsetIdsEnum ... OffsetIdsEnums>
-		friend constexpr Transmitter make_transmitter(TxUnit<OffsetIdsEnums>& ... arg_tx_units) noexcept
+	public:
+		Transmitter() noexcept
 		{
-			return Transmitter{arg_tx_units};
-		}
-
-		constexpr Transmitter(TxUnit<OffsetIdsEnums>& ... arg_tx_units) noexcept:
-			tx_units{&arg_tx_units ...}
-		{
-			if(!are_correctly_lined_up(arg_tx_units ...))
-			{
-				Debug::set_error("There are duplicates or they are not lined up correctly.");
-				Error_Handler();
-			}
+			assert_not_overlap();
 		}
 
 	public:
 		void transmit() noexcept
 		{
-			using Implement::TransmitterImp;
 			using namespace IntegerLiterals;
 
 			// for文って偉大だね...
 			auto for_body_par_tx_unit = [this]<size_t index>(CompileForIndex<index>) constexpr noexcept
 			{
 				CompileForIndex<index + 1> ret{};
-				if constexpr(index == sizeof...(OffsetIdsEnums)) ret.is_breaked = true;
-
-				const auto * tx_unit_p = std::get<index>(tx_units);
-				using Enum = decltype(*tx_unit_p)::OffsetIdsEnum;
-
-				auto for_body_par_offset_id = [tx_unit_p]<Enum offset_id>(CompileForIndex<offset_id>) constexpr noexcept
+				if constexpr(index == sizeof...(OffsetIdsEnums))
 				{
-					CompileForIndex<static_cast<Enum>(to_underlying(offset_id) + 1)> ret{};
-					if constexpr(offset_id == Enum::n)
-					{
-						ret.is_breaked = true;
-						return ret;
-					}
+					ret.is_breaked = true;
+					return ret;
+				}
 
-					
-				};
-
-				compile_for(for_body_par_offset_id, CompileForIndex<static_cast<Enum>(0)>{});
+				std::get<index>(tx_units).transmit();
 				
 				return ret;
 			};
 
 			compile_for(for_body_par_tx_unit, CompileForIndex<0_size_t>{});
+		}
+
+		template<size_t index>
+		constexpr auto& get_tx_unit() noexcept
+		{
+			return std::get<index>(tx_units);
+		}
+
+	private:
+		bool is_tx_units_not_overlap() noexcept
+		{
+			bool ret{true};
+			auto for_body_i = [this, &ret]<size_t i>(CompileForIndex<i>) noexcept
+			{
+				CompileForIndex<i + 1> ret_i{};
+
+				if constexpr(i == sizeof...(OffsetIdsEnums) - 1)
+				{
+					ret_i.is_breaked = true;
+					return ret_i;
+				}
+
+				auto for_body_j = [this, &ret]<size_t j>(CompileForIndex<j>) noexcept
+				{
+					CompileForIndex<j + 1> ret_j{};
+
+					if constexpr(j == sizeof...(OffsetIdsEnums))
+					{
+						ret_j.is_breaked = true;
+						return ret_j;
+					}
+
+					if(is_overlap(std::get<i>(tx_units), std::get<j>(tx_units)))
+					{
+						ret = false;
+						ret_j.is_breaked = true;
+						return ret_j;
+					}
+
+					return ret_j;
+				};
+
+				compile_for(for_body_j, CompileForIndex<i + 1>{});
+
+				return ret_i;
+			};
+
+			compile_for(for_body_i, CompileForIndex<0_size_t>{});
+
+			return ret;
+		}
+
+		void assert_not_overlap() noexcept
+		{
+			if(!is_tx_units_not_overlap())
+			{
+				Debug::set_error("Tx Unit must not overlap.");
+				Error_Handler();
+			}
 		}
 	};
 }
