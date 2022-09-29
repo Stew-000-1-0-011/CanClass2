@@ -21,21 +21,21 @@ namespace CRSLib::Can
 	class CanManager final
 	{
 	public:
-		static void initialize(const u32 ... can_iterrupts) noexcept
+		static void initialize(std::same_as<const u32> auto ... can_interrupts) noexcept
 		{
 			// 既にCubeMXで初期化されている場合, 再初期化
 			if constexpr(Config::use_cube_mx_can_init)
 			{
-				if(HAL_CAN_DeInit(&hcan<can_x>) != HAL_OK)
+				if(HAL_CAN_DeInit(&Implement::hcan<can_x>) != HAL_OK)
 				{
-					Debug::set_error("Fil to deinitialize bxCAN.");
+					Debug::set_error("Fail to deinitialize bxCAN.");
 					Error_Handler();
 					return;
 				}
 			}
 
 			// bxCANを初期化モードに変更し, 初期化
-			if(HAL_CAN_Init(&hcan<can_x>) != HAL_OK)
+			if(HAL_CAN_Init(&Implement::hcan<can_x>) != HAL_OK)
 			{
 				Debug::set_error("Fail to initialize bxCAN.");
 				Error_Handler();
@@ -43,9 +43,9 @@ namespace CRSLib::Can
 			}
 
 			// 割り込みするなら有効化
-			if(activate_interrupt)
+			if constexpr(sizeof...(can_interrupts))
 			{
-				if((HAL_CAN_ActivateNotification(can_iterrupts) != HAL_OK) || ...)  // 多分short circuit. zero lengthで||はfalse.
+				if(((HAL_CAN_ActivateNotification(&Implement::hcan<can_x>, can_interrupts) != HAL_OK) || ...))  // 多分short circuit. zero lengthで||はfalse.
 				{
 					Debug::set_error("Fail to activate CAN interrupt.");
 					Error_Handler();
@@ -54,7 +54,7 @@ namespace CRSLib::Can
 			}
 
 			// 動作モードに変更
-			if(HAL_CAN_Start(&hcan<can_x>) != HAL_OK)
+			if(HAL_CAN_Start(&Implement::hcan<can_x>) != HAL_OK)
 			{
 				Debug::set_error("Fail to start bxCAN.");
 				Error_Handler();

@@ -24,6 +24,8 @@ namespace CRSLib::Can
 		template<CanX can_x, FifoIndex fifo_index, size_t queue_size>
 		void receive(Executor<void () noexcept, queue_size>& executor) noexcept
 		{
+			using namespace CRSLib::IntegerLiterals;
+
 			constexpr u32 fifo = static_cast<u32>(fifo_index);
 
 			while(true)
@@ -34,9 +36,9 @@ namespace CRSLib::Can
 
 				{
 					InterruptDisabler disabler{};
-					if(HAL_CAN_GetRxFifoFillLevel(&hcan<can_x>, fifo) != 0)
+					if(HAL_CAN_GetRxFifoFillLevel(&Implement::hcan<can_x>, fifo) != 0)
 					{
-						HAL_CAN_GetRxMessage(&hcan<can_x>, fifo, &rx_header, rx_frame.data.data());
+						HAL_CAN_GetRxMessage(&Implement::hcan<can_x>, fifo, &rx_header, rx_frame.data.data());
 					}
 					else return;
 				}
@@ -44,21 +46,16 @@ namespace CRSLib::Can
 				rx_frame.header = make_rx_header(rx_header);
 
 				// rx_units内のrx_unitそれぞれのreceiveを呼び出す
-				auto for_body_par_rx_unit = [this, &rx_frame]<size_t index>(CompileForIndex<index>) noexcept
+				auto for_body_par_rx_unit = [this, &rx_frame, &executor]<size_t index, size_t n>(CompileForIndex<index, n>) noexcept
 				{
-					CompileForIndex<index + 1> ret{};
-					if constexpr(index == sizeof...(OffsetIdsEnums))
-					{
-						ret.is_breaked = true;
-						return ret;
-					}
+					CompileForIndex<index + 1, n> ret{};
 
-					std::get<index>(rx_units)->receive(rx_frame, executor);
+					std::get<index>(rx_units).receive(rx_frame, executor);
 
 					return ret;
 				};
 
-				compile_for(for_body_par_rx_unit, CompileForIndex<0_size_t>{});
+				compile_for(for_body_par_rx_unit, CompileForIndex<0_size_t, sizeof...(OffsetIdsEnums)>{});
 			}
 		}
 

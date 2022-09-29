@@ -6,6 +6,7 @@ namespace CRSLib
 {
 	class InterruptDisabler final
 	{
+	public:
 		InterruptDisabler() noexcept
 		{
 			stew_disable_irq();

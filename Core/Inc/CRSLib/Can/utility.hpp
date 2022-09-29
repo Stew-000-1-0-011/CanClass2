@@ -22,32 +22,7 @@ namespace CRSLib::Can
 	inline constexpr u32 max_ext_id = 0x03'FF'FF;
 	inline constexpr u32 null_id = max_ext_id;
 
-	using DataField = std::array<char, can_mtu>;
-
-	struct RxHeader final
-	{
-		u32 id{null_id};
-		u32 time_stamp{-1};
-		bool is_remote{false};
-		u8 dlc{0};
-	};
-
-	RxHeader make_rx_header(const CAN_RxHeaderTypeDef& rx_header) noexcept
-	{
-		return
-			{
-				rx_header.IDE == CAN_ID_STD ? rx_header.StdId : rx_header.ExtId,
-				rx_header.Timestamp,
-				rx_header.RTR == CAN_RTR_REMOTE,
-				static_cast<u8>(rx_header.DLC)
-			};
-	}
-
-	struct RxFrame final
-	{
-		RxHeader header{};
-		DataField data{};
-	};
+	using DataField = std::array<u8, can_mtu>;
 
 	enum class FifoIndex : u32
 	{

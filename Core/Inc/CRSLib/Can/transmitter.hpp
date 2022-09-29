@@ -34,21 +34,16 @@ namespace CRSLib::Can
 			using namespace IntegerLiterals;
 
 			// for文って偉大だね...
-			auto for_body_par_tx_unit = [this]<size_t index>(CompileForIndex<index>) constexpr noexcept
+			auto for_body_par_tx_unit = [this]<size_t index, size_t n>(CompileForIndex<index, n>) constexpr noexcept
 			{
-				CompileForIndex<index + 1> ret{};
-				if constexpr(index == sizeof...(OffsetIdsEnums))
-				{
-					ret.is_breaked = true;
-					return ret;
-				}
+				CompileForIndex<index + 1, n> ret{};
 
-				std::get<index>(tx_units).transmit();
+				std::get<index>(tx_units).template transmit<can_x>();
 				
 				return ret;
 			};
 
-			compile_for(for_body_par_tx_unit, CompileForIndex<0_size_t>{});
+			compile_for(for_body_par_tx_unit, CompileForIndex<0_size_t, sizeof...(OffsetIdsEnums)>{});
 		}
 
 		template<size_t index>
@@ -60,43 +55,37 @@ namespace CRSLib::Can
 	private:
 		bool is_tx_units_not_overlap() noexcept
 		{
+			using namespace CRSLib::IntegerLiterals;
+
 			bool ret{true};
-			auto for_body_i = [this, &ret]<size_t i>(CompileForIndex<i>) noexcept
+
+			if constexpr(sizeof...(OffsetIdsEnums) > 1)
 			{
-				CompileForIndex<i + 1> ret_i{};
-
-				if constexpr(i == sizeof...(OffsetIdsEnums) - 1)
+				auto for_body_i = [this, &ret]<size_t i, size_t n>(CompileForIndex<i, n>) noexcept
 				{
-					ret_i.is_breaked = true;
+					CompileForIndex<i + 1, n> ret_i{};
+
+					auto for_body_j = [this, &ret]<size_t j, size_t n2>(CompileForIndex<j, n2>) noexcept
+					{
+						CompileForIndex<j + 1, n2> ret_j{};
+
+						if(is_overlap(std::get<i>(tx_units), std::get<j>(tx_units)))
+						{
+							ret = false;
+							ret_j.is_breaked = true;
+							return ret_j;
+						}
+
+						return ret_j;
+					};
+
+					compile_for(for_body_j, CompileForIndex<i + 1, sizeof...(OffsetIdsEnums)>{});
+
 					return ret_i;
-				}
-
-				auto for_body_j = [this, &ret]<size_t j>(CompileForIndex<j>) noexcept
-				{
-					CompileForIndex<j + 1> ret_j{};
-
-					if constexpr(j == sizeof...(OffsetIdsEnums))
-					{
-						ret_j.is_breaked = true;
-						return ret_j;
-					}
-
-					if(is_overlap(std::get<i>(tx_units), std::get<j>(tx_units)))
-					{
-						ret = false;
-						ret_j.is_breaked = true;
-						return ret_j;
-					}
-
-					return ret_j;
 				};
 
-				compile_for(for_body_j, CompileForIndex<i + 1>{});
-
-				return ret_i;
-			};
-
-			compile_for(for_body_i, CompileForIndex<0_size_t>{});
+				compile_for(for_body_i, CompileForIndex<0_size_t, sizeof...(OffsetIdsEnums) - 1>{});
+			}
 
 			return ret;
 		}

@@ -29,19 +29,19 @@ namespace CRSLib
 	};
 
 	template<class F, size_t queue_size>
-	class Executor final
+	struct Executor final
 	{
 		static_assert([]{return false;}(), "Wrong template argument.");
 	};
 
 	template<size_t queue_size, class Ret, class ... Args>
-	class Executor<Ret (Args ...), queue_size>
+	struct Executor<Ret (Args ...), queue_size> final
 	{
 		static_assert([]{return false;}(), "Function must be specified noexcept.");
 	};
 
 	template<size_t queue_size, class Ret, class ... Args>
-	class Executor<Ret (Args ...) noexcept, queue_size>
+	struct Executor<Ret (Args ...) noexcept, queue_size> final
 	{
 		using FunctionType = Ret (Args ...) noexcept;
 		InterruptSafeCircularQueue<Executable<FunctionType> *, queue_size> queue{};

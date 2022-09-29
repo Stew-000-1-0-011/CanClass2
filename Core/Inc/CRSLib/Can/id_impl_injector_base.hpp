@@ -9,6 +9,5 @@ namespace CRSLib::Can::Implement
 	concept IdImplInjectorBase = requires
 	{
 		T::queue_size;
-		requires std::same_as<decltype(T::queue_size), size_t>;
 	};
 }

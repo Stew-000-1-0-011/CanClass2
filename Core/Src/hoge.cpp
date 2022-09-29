@@ -57,10 +57,10 @@
 //	uint32_t a;
 //	auto x = __LDREXW(&a);
 //}
-
-#include <functional>
-
-int main()
-{
-	std::function<int()>::result_type a;
-}
+//
+//#include <functional>
+//
+//int main()
+//{
+//	std::function<int()>::result_type a;
+//}

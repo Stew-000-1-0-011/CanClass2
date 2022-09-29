@@ -3,6 +3,7 @@
 #include <compare>
 #include <optional>
 #include <array>
+#include <algorithm>
 
 #include "main.h"
 
@@ -110,12 +111,12 @@ namespace CRSLib::Can
 
 				static constexpr bool has_overlapping_filter(const FilterId& filter_id) noexcept
 				{
-					return ranges::any_of(bank, [&filter_id](const auto& e) -> bool {return e ? is_overlap(e->filter_id, filter_id) : false;});
+					return std::ranges::any_of(bank, [&filter_id](const auto& e) -> bool {return e ? is_overlap(e->filter_id, filter_id) : false;});
 				}
 
 				static constexpr auto find_if(const FilterId& filter_id) noexcept
 				{
-					return ranges::find_if(bank, [&filter_id](const auto& e) -> bool {return e ? : e->filter_id == filter_id : false;});
+					return std::ranges::find_if(bank, [&filter_id](const auto& e) -> bool {return e ? e->filter_id == filter_id : false;});
 				}
 
 				static constexpr u32 iterator_to_index(const auto iter) noexcept
@@ -134,7 +135,6 @@ namespace CRSLib::Can
 		void register_filter(const FilterId& filter_id, bool activated) noexcept
 		{
 			using namespace Implement;
-			using std::ranges;
 
 			if(is_overlap(filter_id, FilterId{}))
 			{
@@ -150,7 +150,7 @@ namespace CRSLib::Can
 			// FMIを使わないなら自分でidと格納先のキューを比較することになり,
 			// そうなれば同じidに対してキューが複数個ある場合を扱うこともたやすい)
 			// 
-			// if(FilterBank::has_overlapping_filter(filter_id))
+			// if(FilterBank<can_x>::has_overlapping_filter(filter_id))
 			// {
 			// 	Debug::set_error("This filter overlaps with registered one.");
 			// 	Error_Handler();
@@ -165,9 +165,9 @@ namespace CRSLib::Can
 			}
 			else
 			{
-				const u32 empty_index = FilterBank::iterator_to_index(empty_iter);
+				const u32 empty_index = FilterBank<can_x>::iterator_to_index(empty_iter);
 				auto filter = make_can_filter(filter_id, empty_index, activated);
-				if(HAL_CAN_ConfigFilter(&hcan<can_x>, &filter) != HAL_OK)
+				if(HAL_CAN_ConfigFilter(&Can::Implement::hcan<can_x>, &filter) != HAL_OK)
 				{
 					Debug::set_error("Fail to call HAL_CAN_ConfigFilter.");
 					Error_Handler();
@@ -181,7 +181,7 @@ namespace CRSLib::Can
 		{
 			using namespace Implement;
 
-			if(const auto unregistered_iter = FilterBank::find_if<can_x>(filter_id); is_end(unregistered_iter))
+			if(const auto unregistered_iter = FilterBank<can_x>::find_if<can_x>(filter_id); is_end(unregistered_iter))
 			{
 				Debug::set_error("No Filter has this base_id and fifo_index.");
 				Error_Handler();
@@ -189,9 +189,9 @@ namespace CRSLib::Can
 			}
 			else
 			{
-				const u32 unregistered_index = FilterBank::iterator_to_index(unregistered_iter);
+				const u32 unregistered_index = FilterBank<can_x>::iterator_to_index(unregistered_iter);
 				auto filter = make_can_filter(filter_id, unregistered_index, false);
-				if(HAL_CAN_ConfigFilter(&hcan<can_x>, &filter) != HAL_OK)
+				if(HAL_CAN_ConfigFilter(&Can::Implement::hcan<can_x>, &filter) != HAL_OK)
 				{
 					Debug::set_error("Fail to call HAL_CAN_ConfigFilter.");
 					Error_Handler();
@@ -261,15 +261,15 @@ namespace CRSLib::Can
 		{
 			using namespace Implement;
 
-			const auto disabled_iter = FilterBank::find_if<can_x>(filter_id);
-			if(FilterBank::is_end(disabled_iter))
+			const auto disabled_iter = FilterBank<can_x>::find_if<can_x>(filter_id);
+			if(FilterBank<can_x>::is_end(disabled_iter))
 			{
 				Debug::set_error("No Filter has this base_id and fifo_index.");
 				Error_Handler();
 				return;
 			}
 
-			auto filter = make_can_filter(filter_id, FilterBank::iterator_to_index(disabled_iter), false);
+			auto filter = make_can_filter(filter_id, FilterBank<can_x>::iterator_to_index(disabled_iter), false);
 			if(HAL_CAN_ConfigFilter(&filter) != HAL_OK)
 			{
 				Debug::set_error("Fail to call HAL_CAN_ConfigFilter.");
@@ -285,7 +285,7 @@ namespace CRSLib::Can
 		{
 			using namespace Implement;
 
-			const auto enablec_iter = find_if<can_x>(filter_id);
+			const auto enabled_iter = find_if<can_x>(filter_id);
 			if(FilterBank<can_x>::is_end(enabled_iter))
 			{
 				Debug::set_error("No Filter has this base_id and fifo_index.");

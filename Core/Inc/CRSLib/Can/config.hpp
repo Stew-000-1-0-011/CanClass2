@@ -20,8 +20,8 @@ namespace CRSLib::Can::Config
     
     // 特殊化してね
     template<CanX can_x>
-    inline constexpr CAN_TypeDef * can_instance{nullptr};
+    inline constinit CAN_TypeDef * can_instance{nullptr};
 
     template<>
-    inline constexpr CAN_TypeDef * can_instance<CanX::single_can> = static_cast<CAN_TypeDef *>(static_cast<i_ptr>(CAN1));
+    inline constinit CAN_TypeDef * can_instance<CanX::single_can> = reinterpret_cast<CAN_TypeDef *>(reinterpret_cast<i_ptr>(CAN1));
 }

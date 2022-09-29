@@ -9,11 +9,11 @@
 
 namespace CRSLib::Can
 {
-	template<IsOffsetIdsEnum IsOffsetIdsEnum_>
+	template<IsOffsetIdsEnum OffsetIdsEnum_>
 	class UnitBase
 	{
-	public:
 		using OffsetIdsEnum = OffsetIdsEnum_;
+	public:
 		static constexpr auto id_num = to_underlying(OffsetIdsEnum::n);
 		// static constexpr auto align = UnitBase<OffsetIdsEnum>::calc_id_align(id_num);
 	

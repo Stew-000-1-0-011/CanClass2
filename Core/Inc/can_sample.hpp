@@ -27,47 +27,51 @@ namespace Chibarobo2022
 	};
 }
 
-
-template<>
-struct CRSLib::Can::TxIdImplInjector<Chibarobo2022::MyMotorInfo::Info>
+namespace CRSLib::Can
 {
-	static constexpr size_t queue_size = 1;
-};
+	template<>
+	struct TxIdImplInjector<Chibarobo2022::MyMotorInfo::Info>
+	{
+		static constexpr size_t queue_size = 1;
+	};
+
+	template<>
+	struct RxIdImplInjector<Chibarobo2022::MyMotorCommand::Command>
+	{
+		static constexpr size_t queue_size = 10;
+	};
+}
 
 namespace Chibarobo2022
 {
 	inline CRSLib::Can::Transmitter<CRSLib::Can::CanX::single_can, Chibarobo2022::MyMotorInfo> transmitter{};
 }
 
-template<>
-struct CRSLib::Can::RxIdImplInjector<Chibarobo2022::MyMotorCommand::Command>
+namespace CRSLib::Can
 {
-	static constexpr size_t queue_size = 10;
-};
-
-template<>
-struct CRSLib::Can::RxIdImplInjector<Chibarobo2022::MyMotorCommand::Target>
-{
-	static constexpr size_t queue_size = 10;
-
-	void callback(const CRSLib::Can::RxFrame& rx_frame) noexcept
+	template<>
+	struct RxIdImplInjector<Chibarobo2022::MyMotorCommand::Target>
 	{
-		CRSLib::Can::DataField data_field = rx_frame.data;
-		Chibarobo2022::transmitter.template get_tx_unit<0>().template push<Chibarobo2022::MyMotorInfo::Info>(data_field);
-	}
-};
+		static constexpr size_t queue_size = 10;
 
-template<>
-struct CRSLib::Can::RxIdImplInjector<Chibarobo2022::MyMotorCommand::SubCommand>
-{
-	static constexpr size_t queue_size = 1;
+		void callback(const CRSLib::Can::RxFrame& rx_frame) noexcept
+		{
+			Chibarobo2022::transmitter.template get_tx_unit<0>().template push<Chibarobo2022::MyMotorInfo::Info>(TxFrame{rx_frame.data, {rx_frame.header.dlc}});
+		}
+	};
 
-	void callback(const CRSLib::Can::RxFrame& rx_frame) noexcept
+	template<>
+	struct RxIdImplInjector<Chibarobo2022::MyMotorCommand::SubCommand>
 	{
-		CRSLib::Can::DataField data_field = rx_frame.data;
-		Chibarobo2022::transmitter.template get_tx_unit<0>().template push<Chibarobo2022::MyMotorInfo::Info>(data_field);
-	}
-};
+		static constexpr size_t queue_size = 1;
+
+		void callback(const CRSLib::Can::RxFrame& rx_frame) noexcept
+		{
+			Chibarobo2022::transmitter.template get_tx_unit<0>().template push<Chibarobo2022::MyMotorInfo::Info>(TxFrame{rx_frame.data, {rx_frame.header.dlc}});
+		}
+	};
+
+}
 
 namespace Chibarobo2022
 {
