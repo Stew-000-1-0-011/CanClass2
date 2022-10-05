@@ -31,7 +31,7 @@ namespace CRSLib
 	namespace IntegerLiterals
 	{
 #define Stew_define_integer_literals(type)\
-		inline constexpr type operator "" _##type(unsigned long long x) noexcept\
+		inline constexpr type operator"" _##type(unsigned long long x) noexcept\
 		{\
 			return x;\
 		}

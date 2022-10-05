@@ -1,9 +1,9 @@
 #pragma once
 
-#include "main.h"
+#include "hal_can.hpp"
 
 #include <CRSLib/std_int.hpp>
-#include "utility.hpp"
+#include "can_x.hpp"
 
 namespace CRSLib::Can::Config
 {
@@ -14,14 +14,16 @@ namespace CRSLib::Can::Config
 
     // DualCANを使うかどうか
     inline constexpr bool is_dual_can = false;
-
-    // CubeMXの自動生成のコードでHAL_CAN_Initを呼んでいるかどうか
-    inline constexpr bool use_cube_mx_can_init = true;
     
-    // 特殊化してね
-    template<CanX can_x>
-    inline constinit CAN_TypeDef * can_instance{nullptr};
+    // 定義してね
+    inline Can_TypeDef * can_instance(CanX can_x) noexcept
+    {
+        switch(can_x)
+        {
+        case CanX::
+        }
+    }
 
     template<>
-    inline constinit CAN_TypeDef * can_instance<CanX::single_can> = reinterpret_cast<CAN_TypeDef *>(reinterpret_cast<i_ptr>(CAN1));
+    inline constinit CAN_TypeDef * can_instance<CanX::single_can> = 
 }

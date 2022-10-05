@@ -5,7 +5,7 @@
 #include <array>
 #include <algorithm>
 
-#include "main.h"
+#include "hal_can.hpp"
 
 #include <CRSLib/std_int.hpp>
 #include <CRSLib/debug.hpp>

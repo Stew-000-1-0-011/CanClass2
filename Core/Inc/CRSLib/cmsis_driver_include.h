@@ -1,2 +1,2 @@
 // 以下のファイルは使うマイコンの種類によって変更すること.
-#include <stm32f103xb.h>
+#include <stm32f1xx.h>

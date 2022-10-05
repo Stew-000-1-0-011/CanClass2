@@ -8,7 +8,7 @@ namespace CRSLib
     namespace Implement::CompileForImp
     {
         template<class T>
-        concept IsForIter = requires(T iter)
+        concept ForIterC = requires(T iter)
         {
             requires std::same_as<decltype(iter.is_breaked), bool>;
             requires (std::same_as<typename T::comptime_is_breaked, std::true_type> ||
@@ -16,7 +16,7 @@ namespace CRSLib
         };
     }
 
-    template<class BodyFunc, Implement::CompileForImp::IsForIter ForIter>
+    template<class BodyFunc, Implement::CompileForImp::ForIterC ForIter>
     constexpr void compile_for(BodyFunc&& body_func, ForIter&& for_iter) noexcept
     {
         auto&& next_iter = body_func(for_iter);

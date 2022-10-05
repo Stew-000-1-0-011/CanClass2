@@ -1,11 +1,10 @@
-// OffsetId
-
 #pragma once
 
 #include <CRSLib/std_int.hpp>
 #include "utility.hpp"
 #include "offset_id.hpp"
 #include "id_impl_injector_base.hpp"
+#include "abstract_mpu_specific_constraint_check.hpp"
 
 namespace CRSLib::Can
 {
@@ -17,24 +16,7 @@ namespace CRSLib::Can
 		u8 dlc{0};
 	};
 
-	struct RxFrame final
-	{
-		RxHeader header{};
-		DataField data{};
-	};
-
-	RxHeader make_rx_header(const CAN_RxHeaderTypeDef& rx_header) noexcept
-	{
-		return
-			{
-				rx_header.IDE == CAN_ID_STD ? rx_header.StdId : rx_header.ExtId,
-				rx_header.Timestamp,
-				rx_header.RTR == CAN_RTR_REMOTE,
-				static_cast<u8>(rx_header.DLC)
-			};
-	}
-
-	template<IsOffsetIdsEnum auto offset_id>
+	template<OffsetIdsEnumC auto offset_id>
 	class RxIdImplInjector;
 
 	namespace Implement
@@ -72,10 +54,10 @@ namespace CRSLib::Can
 		}
 
 		template<class T>
-		concept IsRxIdImplInjector = RxIdImplInjectorImp::is_rx_id_impl_injector<T> && IdImplInjectorBase<T>;
+		concept RxIdImplInjectorC = RxIdImplInjectorImp::is_rx_id_impl_injector<T> && IdImplInjectorBase<T>;
 
-		template<IsOffsetIdsEnum auto offset_id>
-		requires IsRxIdImplInjector<RxIdImplInjector<offset_id>>
+		template<OffsetIdsEnumC auto offset_id>
+		requires RxIdImplInjectorC<RxIdImplInjector<offset_id>>
 		using RxIdImplAdaptor = RxIdImplInjector<offset_id>;
 	}
 }
