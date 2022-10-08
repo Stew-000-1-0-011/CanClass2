@@ -1,6 +1,5 @@
 #include <array>
 
-#include "hal_can.hpp"
 #include "filter_feature.hpp"
 
 namespace CRSLib::Can
@@ -31,20 +30,4 @@ namespace CRSLib::Can
 	{
 		std::array<FrameFeature<FilterWidth::bit16>, 4> feature16s;
 	};
-
-	// なんでCAN_TypeDefのFilterIdHighとかu16じゃなくてu32なの...？
-	// -> あまりにあんまりなため、HAL_ConfigFilter相当の機能を自作することにした. 可搬性は同程度に維持するつもりだ.
-	// DualCANでも動き, 関連の薄い変更を分離する. 
-	
-	// inline constexpr  make_filter(const Filter<FilterWidth::bit32, FilterMode::mask>& filter) noexcept
-	// {
-	// 	return
-	// 	{
-	// 		.FilterIdHigh = filter.masked32.id.value >> (u32)16,
-	// 		.FilterIdLow = filter.masked32.id.value & (u32)0xFF'FF,
-	// 		.FilterMaskIdHigh = filter.masked32.mask.value >> (u32)16,
-	// 		.FilterMaskIdLow = filter.masked32.mask.value & (u32)0xFF'FF,
-	// 		.FilterFIFOAssignment = filter.
-	// 	};
-	// }
 }

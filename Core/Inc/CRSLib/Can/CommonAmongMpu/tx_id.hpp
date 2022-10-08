@@ -9,7 +9,6 @@
 #include "abstract_mpu_specific_constraint_check.hpp"
 #include "tx_id_impl_injector.hpp"
 #include "utility.hpp"
-#include "handle.hpp"
 
 namespace CRSLib::Can
 {
@@ -17,18 +16,14 @@ namespace CRSLib::Can
 	struct TxId final
 	{
 		using Impl = TxIdImplInjectorAdaptor<offset_id>;
-		SafeCircularQueue<TxFrame, Impl::queue_size> queue{};
+		SafeCircularQueue<TxFrame, Impl::queue_size()> queue{};
 
 		// Mailboxが満杯になった(あるいはエラーが発生した)らfalse, そうでなければtrueを返す.
 		bool transmit(Pillarbox& pillarbox, const u32 base_id) noexcept
 		{
 			while(true)
 			{
-				if(!pillarbox.empty())
-				{
-					return false;
-				}
-				else
+				if(pillarbox.not_full())
 				{
 					if(auto opt_tx_frame = queue.pop(); !opt_tx_frame)
 					{
@@ -38,6 +33,10 @@ namespace CRSLib::Can
 					{
 						pillarbox.post(base_id, *opt_tx_frame);
 					}
+				}
+				else
+				{
+					return false;
 				}
 			}
 		}

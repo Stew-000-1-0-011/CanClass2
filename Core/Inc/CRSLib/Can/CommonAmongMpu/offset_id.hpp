@@ -4,6 +4,7 @@
 #include <concepts>
 
 #include <CRSLib/std_int.hpp>
+#include <CRSLib/utility.hpp>
 
 namespace CRSLib::Can
 {

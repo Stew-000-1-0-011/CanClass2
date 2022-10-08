@@ -15,4 +15,6 @@ namespace CRSLib::Debug
         Implement::DebugImp::error_happened = true;
         if(!Implement::DebugImp::error_message) Implement::DebugImp::error_message = str;
     }
+
+    void error_handler() noexcept;
 }

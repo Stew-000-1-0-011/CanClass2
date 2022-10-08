@@ -10,4 +10,8 @@ namespace CRSLib
 	{
 		return static_cast<std::underlying_type_t<Enum>>(x);
 	}
+
+	template<class Lambda, int=(Lambda{}(), 0)>
+	constexpr bool is_constexpr(Lambda){return true;}
+	constexpr bool is_constexpr(...) {return false;}
 }

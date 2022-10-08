@@ -20,7 +20,7 @@
 namespace CRSLib::Can::Implement
 {
 	template<OffsetIdsEnumC OffsetIdsEnum_>
-	class RxUnit final : public UnitBase<OffsetIdsEnum_>
+	class RxUnit final : public UnitBase
 	{
 	public:
 		using OffsetIdsEnum = OffsetIdsEnum_;
@@ -30,7 +30,7 @@ namespace CRSLib::Can::Implement
 
 	public:
 		constexpr RxUnit(const u32 base_id, const auto ... args) noexcept:
-			UnitBase<OffsetIdsEnum>{base_id},
+			UnitBase{to_underlying(OffsetIdsEnum::n), base_id},
 			rx_ids{args ...}
 		{}
 

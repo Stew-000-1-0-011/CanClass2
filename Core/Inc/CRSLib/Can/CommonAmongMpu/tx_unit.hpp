@@ -2,35 +2,35 @@
 
 #include <CRSLib/std_int.hpp>
 #include <CRSLib/utility.hpp>
+#include <CRSLib/compile_for.hpp>
 
 #include "utility.hpp"
-#include "config.hpp"
 #include "tx_id.hpp"
 #include "unit_base.hpp"
 #include "abstract_mpu_specific_constraint_check.hpp"
 
 namespace CRSLib::Can::Implement
 {
-	struct TxUnitInterface
+	struct TxUnitBase : UnitBase
 	{
-		virtual void transmit() noexcept = 0;
-		virtual u32 get_base_id() const noexcept = 0;
+		virtual void transmit(Pillarbox& pillarbox) noexcept = 0;
+		using UnitBase::UnitBase;
 	};
 
-	template<OffsetIdsEnumC OffsetIdsEnum_, TxFrameC TxFrame>
-	class TxUnit final : public UnitBase<OffsetIdsEnum_>, TxUnitInterface
+	template<OffsetIdsEnumC OffsetIdsEnum_>
+	class TxUnit final : public TxUnitBase
 	{
 		using OffsetIdsEnum = OffsetIdsEnum_;
-		TxIdTuple<OffsetIdsEnum::n, TxFrame> tx_ids{};
+		TxIdTuple<OffsetIdsEnum::n> tx_ids{};
 
 	public:
 		TxUnit(const u32 base_id) noexcept:
-			UnitBase<OffsetIdsEnum>{base_id}
+			TxUnitBase{to_underlying(OffsetIdsEnum::n), base_id}
 		{}
 
 		void transmit(Pillarbox& pillarbox) noexcept override
 		{
-			auto for_body_par_id = [this]<std::underlying_type_t<OffsetIdsEnum> offset_id, std::underlying_type_t<OffsetIdsEnum> n>(CompileForIndex<offset_id, n>) noexcept
+			auto for_body_par_id = [this, &pillarbox]<std::underlying_type_t<OffsetIdsEnum> offset_id, std::underlying_type_t<OffsetIdsEnum> n>(CompileForIndex<offset_id, n>) noexcept
 			{
 				CompileForIndex<offset_id + 1, n> ret{};
 
@@ -39,11 +39,6 @@ namespace CRSLib::Can::Implement
 			};
 
 			compile_for(for_body_par_id, CompileForIndex<static_cast<std::underlying_type_t<OffsetIdsEnum>>(0), to_underlying(OffsetIdsEnum::n)>{});
-		}
-
-		u32 get_base_id() const noexcept
-		{
-			return base_id;
 		}
 
 		void set_base_id(const u32 base_id) noexcept

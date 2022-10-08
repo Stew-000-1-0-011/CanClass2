@@ -7,21 +7,17 @@
 #include <CRSLib/std_int.hpp>
 #include <CRSLib/Can/CommonAmongMpu/utility.hpp>
 
+#include "utility.hpp"
+
 namespace CRSLib::Can::STM32f1
 {
-	enum class FifoIndex : u32
-	{
-		fifo1 = CAN_RX_FIFO0,
-		fifo2 = CAN_RX_FIFO1
-	};
-
 	struct RxHeader final
 	{
 		u32 id;
 		u32 time_stamp;
 		u32 filter_match_index;
 		u8 dlc;
-		bool rtr{false};
+		bool rtr;
 
 		constexpr u32 get_id() const noexcept
 		{

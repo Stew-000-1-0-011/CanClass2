@@ -20,7 +20,7 @@ namespace CRSLib::Can
 	concept PillarboxC = TxFrameC<TxFrame> && requires(T pillarbox, const u32 id, TxFrame tx_frame)
 	{
 		{pillarbox.post(id, tx_frame)} noexcept;
-		{pillarbox.empty()} noexcept -> std::same_as<bool>;
+		{pillarbox.not_full()} noexcept -> std::same_as<bool>;
 	};
 
 	template<class T>

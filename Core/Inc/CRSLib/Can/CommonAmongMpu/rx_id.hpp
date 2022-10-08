@@ -23,7 +23,7 @@ namespace CRSLib::Can::Implement
 	struct RxId<offset_id> final
 	{
 		using Impl = RxIdImplAdaptor<offset_id>;
-		SafeCircularQueue<RxFrame, Impl::queue_size> queue{};
+		SafeCircularQueue<RxFrame, Impl::queue_size()> queue{};
 
 		RxId() = default;
 	};

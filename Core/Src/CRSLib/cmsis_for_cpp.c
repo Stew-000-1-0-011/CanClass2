@@ -8,9 +8,9 @@ uint32_t stew_load_link_32(uint32_t * src)
     return __LDREXW(src);
 }
 
-unsigned char stew_store_conditional_32(uint32_t * dst, uint32_t val)
+uint32_t stew_store_conditional_32(uint32_t val, uint32_t * dst)
 {
-    return __STREXW(dst, val);
+    return __STREXW(val, dst);
 }
 
 void stew_enable_irq(void)

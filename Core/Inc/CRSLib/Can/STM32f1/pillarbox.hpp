@@ -9,8 +9,11 @@ namespace CRSLib::Can::STM32f1
 {
 	struct TxHeader final
 	{
+		// 送信するデータ長	(0~8)
 		u8 dlc;
+		// リモートフレームかどうか
 		bool rtr{false};
+		// Transmit Global Time機能を使うかどうか(注意: これが使えるモードに設定してないといけない)
 		bool transmit_global_time{false};
 	};
 
@@ -46,7 +49,7 @@ namespace CRSLib::Can::STM32f1
 			HAL_CAN_AddTxMessage(hcan, &tx_header, frame.data.data(), &mailbox);
 		}
 
-		bool empty() const noexcept
+		bool not_full() const noexcept
 		{
 			return HAL_CAN_GetTxMailboxesFreeLevel(hcan) != 0;
 		}

@@ -25,11 +25,12 @@ namespace CRSLib::Can
 
 	public:
 
-		Receiver(const Implement::ReceiverImp::RecieverArgC auto ... args) noexcept:
+		Receiver(const Implement::ReceiverImp::ReceiverArgC auto ... args) noexcept:
 			rx_units{args ...}
 		{}
 
 		// 各rx_unitsに受信したフレームを振り分け, executorにコールバックをpushする.
+		template<size_t queue_size>
 		void receive(Letterbox& letterbox, Executor<void () noexcept, queue_size>& executor) noexcept
 		{
 			while(true)
@@ -53,7 +54,7 @@ namespace CRSLib::Can
 					return ret;
 				};
 
-				compile_for(for_body_par_rx_unit, CompileForIndex<0_size_t, sizeof...(OffsetIdsEnums)>{});
+				compile_for(for_body_par_rx_unit, CompileForIndex<(size_t)0, sizeof...(OffsetIdsEnums)>{});
 			}
 		}
 

@@ -21,6 +21,9 @@ namespace CRSLib::Can
 	template<FilterWidth>
 	struct FrameFeature;
 
+	template<FilterWidth filter_width>
+	struct MaskedFrameFeature;
+
 	// フレームの特徴量.
 	// valueはそのままCAN_FilterTypeDefの.*Highや.*Lowに突っ込める.
 	// 32bitのFrameFeatureはフィルタの特徴量を全て指定するが、16bitはext_idの下位15ビットを無視する.
@@ -39,12 +42,12 @@ namespace CRSLib::Can
 		};
 
 		constexpr FrameFeature(const u16 std_id = max_std_id, const u32 ext_id = 0, const bool ide = false, const bool rtr = false) noexcept:
-			value{std_id << (u16)21 | ext_id << (u32)8 | (u8)ide << 2 | (u8)rtr << 1}
+			value{(u16)(std_id << (u16)21 | ext_id << (u32)8 | (u8)ide << 2 | (u8)rtr << 1)}
 		{}
 
 		constexpr UnPack unpack() const noexcept
 		{
-			return {.std_id = value >> (u32)21, .ext_id = value >> (u32)8 & max_ext_id, .ide = value >> (u32)2 & 0b1, .rtr = value >> (u32)1 & 0b1};
+			return {.std_id = (u16)(value >> (u32)21), .ext_id = value >> (u32)8 & max_ext_id, .ide = (bool)(value >> (u32)2 & 0b1), .rtr = bool(value >> (u32)1 & 0b1)};
 		}
 
 		friend bool operator==(const FrameFeature&, const FrameFeature&) = default;
@@ -65,13 +68,14 @@ namespace CRSLib::Can
 			u8 ext_id_0b111;
 		};
 
+		// IDEとRTRが32bitと逆！！！！１！！！れ！！！
 		constexpr FrameFeature(const u16 std_id = max_std_id, const bool ide = false, const bool rtr = false, const u8 ext_id_0b111 = 0) noexcept:
-			value{std_id << (u16)5 | (u8)ide << 4 | (u8)rtr << 3 | ext_id_0b111}
+			value{(u16)(std_id << (u16)5 | (u8)rtr << 4 | (u8)ide << 3 | ext_id_0b111)}
 		{}
 
 		constexpr UnPack unpack() const noexcept
 		{
-			return {.std_id = value >> (u16)5, .ide = value >> (u32)4 & 0b1, .rtr = value >> (u32)3 & 0b1, .ext_id_0b111 = value & 0b111};
+			return {.std_id = (u16)(value >> (u16)5), .ide = (bool)(value >> (u32)4 & 0b1), .rtr = (bool)(value >> (u32)3 & 0b1), .ext_id_0b111 = (u8)(value & 0b111)};
 		}
 
 		friend bool operator==(const FrameFeature&, const FrameFeature&) = default;
@@ -87,7 +91,7 @@ namespace CRSLib::Can
 		FrameFeature<filter_width> id;
 		FrameFeature<filter_width> mask;
 
-		friend constexpr bool operator==(const MaskedFrameFeature&, const MaskedFrameFeature&) noexcept
+		friend constexpr bool operator==(const MaskedFrameFeature& l, const MaskedFrameFeature& r) noexcept
 		{
 			return l.id.value & l.mask.value == r.id.value & r.mask.value;
 		}
@@ -118,8 +122,7 @@ namespace CRSLib::Can
 		}
 	};
 
-	template<>
-	FrameFeature<FilterWidth::bit32>::operator MaskedFrameFeature<FilterWidth::bit32>() const noexcept
+	constexpr FrameFeature<FilterWidth::bit32>::operator MaskedFrameFeature<FilterWidth::bit32>() const noexcept
 	{
 		return
 		{
@@ -128,13 +131,12 @@ namespace CRSLib::Can
 		};
 	}
 
-	template<>
-	FrameFeature<FilterWidth::bit16>::operator MaskedFrameFeature<FilterWidth::bit32>() const noexcept
+	constexpr FrameFeature<FilterWidth::bit16>::operator MaskedFrameFeature<FilterWidth::bit32>() const noexcept
 	{
 		auto [std_id, ide, rtr, ext_id_0b111] = unpack();
 		return
 		{
-			.id = {std_id, ext_id_0b111 << (u32)15, ide, rtr},
+			.id = {std_id, (u32)ext_id_0b111 << (u32)15, ide, rtr},
 			.mask = {max_std_id, (u32)(0b111 << 15), true, true}
 		};
 	}
