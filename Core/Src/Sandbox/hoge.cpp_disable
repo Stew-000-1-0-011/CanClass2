@@ -1,8 +1,0 @@
-int main()
-{
-	DataField data;
-	int x = 88;
-	pack(data, x);
-	int y;
-	unpack(data, y);
-}
